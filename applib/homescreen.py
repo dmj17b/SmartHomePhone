@@ -30,8 +30,7 @@ class HeaderWidget:
         # Escape button:
         self.button = tk.Button(master=self.master, text='ESC', command=self.master.destroy, height=1, width=1, bg='red')
         self.button.place(anchor='ne', x=790, y=10)
-        self.frame.pack()
-        self.frame.after(1, self.updateClock)
+        self.frame.after(100, self.updateClock)
         return
 
     def updateClock(self):
@@ -47,96 +46,102 @@ class Menu:
     def __init__(self, master):
         # Initialize the menu
         self.master = master
-
         self.buttonHeight = 5
         self.buttonWidth = 10
-        self.state = 0
+        self.menuState = tk.IntVar(value=0)
+
 
         self.padx = 5
         self.pady = 5
-        self.ipadx = 5
-        self.ipady = 5
-        self.menu_state = 0
+        self.ipadx = 25
+        self.ipady = 15
 
         # Create a new frame under the master
         self.button_frame = ttk.Frame(master=self.master)
-
         # Create the buttons:
-        self.button = ttk.Button(master=self.button_frame,
-                                 text='Home',
-                                 command=self.homepage,
-                                 width=self.buttonWidth,
-                                 style='primary')
-        self.button.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
+        self.homebutton = ttk.Button(master=self.button_frame,
+                         text='Home',
+                         command=self.homepage,
+                         width=self.homepage,
+                         style='primary')
+        self.homebutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
 
-        self.button = ttk.Button(master=self.button_frame,
-                                 text='Phone',
-                                 command=self.phone,
-                                 width=self.buttonWidth,
-                                 style='secondary')
+        self.phonebutton = ttk.Button(master=self.button_frame,
+                          text='Phone',
+                          command=self.phone,
+                          width=self.buttonWidth,
+                          style='secondary')
+        self.phonebutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
 
-        self.button.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
+        self.musicbutton = ttk.Button(master=self.button_frame,
+                          text='Music',
+                          command=self.music,
+                          width=self.buttonWidth,
+                          style='warning')
+        self.musicbutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
 
-        self.button = ttk.Button(master=self.button_frame,
-                                 text='Music',
-                                 command=self.music,
-                                 width=self.buttonWidth,
-                                 style='warning')
-        self.button.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
+        self.smarthomebutton = ttk.Button(master=self.button_frame,
+                          text='Smart Home',
+                          command=self.smartHome,
+                          width=self.buttonWidth,
+                          style='info')
+        self.smarthomebutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
 
-        self.button = ttk.Button(master=self.button_frame,
-                                 text='Smart Home',
-                                 command=self.smartHome,
-                                 width=self.buttonWidth,
-                                 style='info')
-        self.button.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
+        self.destroybutton = ttk.Button(master=self.button_frame,
+                        text='Destroy',
+                        command=self.button_frame.destroy,
+                        width=self.buttonWidth,
+                        style='primary')
+        self.destroybutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
 
-        self.button = ttk.Button(master=self.button_frame,
-                                 text='Destroy',
-                                 command=self.destroy,
-                                 width=self.buttonWidth,
-                                 style='primary')
-        self.button.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
+        self.paintbutton = ttk.Button(master=self.button_frame,
+                        text='Paint',
+                        width=self.buttonWidth,
+                        style='primary')
+        self.paintbutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
 
-        self.button_frame.pack(side='bottom')
         return
 
     def homepage(self):
         # Action for the "Home" button
-        print("Changing output")
+        print("Home Screen:")
+        self.menuState.set(value=0)
         return
 
     def phone(self):
         # Action for the "Phone" button
         print("Phone app")
-
-    def weather(self):
-        # Action for the "Weather" button
-        print("Weather app")
+        self.menuState.set(value=1)
+        return
 
     def music(self):
         # Action for the "Music" button
         print("Music app")
+        self.menuState.set(value=2)
+        return
 
     def smartHome(self):
         # Action for the "Smart Home" button
         print("Smart home app")
+        self.menuState.set(value=3)
+        return
 
-    def destroy(self):
-        # Action for the "Destroy" button
-        self.button_frame.destroy()
+    def settings(self):
+        # Action for the "settings" button
+        print("Settings app")
+        self.menuState.set(value=4)
         return
     
 class HomePage():
     def __init__(self):
-        self.window = ttk.Window(themename='cyborg')
 
-        self.window.mainloop()
         return
 
     def display(self):
         # Display the home page
+        self.window = ttk.Window(themename='cyborg')
         self.header = HeaderWidget(master=self.window)
-        self.label = ttk.Label(master=self.frame, text='Home Page', font='calibri 28', foreground='cyan')
+        self.label = ttk.Label(master=self.window, text='Home Page', font='calibri 28', foreground='cyan')
         self.label.pack(pady=5)
+        self.window.mainloop()
         return
