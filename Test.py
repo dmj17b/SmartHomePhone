@@ -7,8 +7,10 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
+
 # If modifying these SCOPES, delete the file token.json.
-SCOPES = ['https://www.googleapis.com/auth/calendar']
+SCOPES = ["https://www.googleapis.com/auth/calendar"]
+
 def main():
     """Shows basic usage of the Google Calendar API.
     Prints the start and name of the next 10 events on the user's calendar.
@@ -34,32 +36,18 @@ def main():
     service = build('calendar', 'v3', credentials=creds)
 
     # Call the Calendar API
-    schedule = [
-        {"summary": "Gym Session", "start": "2024-05-19T09:00:00-04:00", "end": "2024-05-19T09:45:00-04:00"},
-        {"summary": "Shower and Get Ready", "start": "2024-05-19T09:45:00-04:00", "end": "2024-05-19T10:15:00-04:00"},
-        {"summary": "Work on Smart Home Project", "start": "2024-05-19T10:30:00-04:00", "end": "2024-05-19T12:00:00-04:00"},
-        {"summary": "Lunch", "start": "2024-05-19T12:00:00-04:00", "end": "2024-05-19T13:00:00-04:00"},
-        {"summary": "Work on Smart Home Project", "start": "2024-05-19T13:00:00-04:00", "end": "2024-05-19T16:00:00-04:00"},
-        {"summary": "Relax/Personal Time", "start": "2024-05-19T16:00:00-04:00", "end": "2024-05-19T18:00:00-04:00"},
-        {"summary": "Prepare for Dinner Plans", "start": "2024-05-19T18:00:00-04:00", "end": "2024-05-19T20:00:00-04:00"},
-        {"summary": "Pick Up Dinner", "start": "2024-05-19T20:00:00-04:00", "end": "2024-05-19T21:00:00-04:00"},
-        {"summary": "Drive to Christi’s House", "start": "2024-05-19T21:00:00-04:00", "end": "2024-05-19T21:30:00-04:00"},
-        {"summary": "Dinner with Christi", "start": "2024-05-19T21:30:00-04:00", "end": "2024-05-19T23:00:00-04:00"}
-    ]
+    now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+    print('Getting the upcoming 10 events')
+    events_result = service.events().list(calendarId='primary', timeMin=now,
+                                          maxResults=10, singleEvents=True,
+                                          orderBy='startTime').execute()
+    events = events_result.get('items', [])
 
-    for event in schedule:
-        event_body = {
-            'summary': event['summary'],
-            'start': {
-                'dateTime': event['start'],
-                'timeZone': 'America/New_York',
-            },
-            'end': {
-                'dateTime': event['end'],
-                'timeZone': 'America/New_York',
-            },
-        }
-        service.events().insert(calendarId='primary', body=event_body).execute()
+    if not events:
+        print('No upcoming events found.')
+    for event in events:
+        start = event['start'].get('dateTime', event['start'].get('date'))
+        print(start, event['summary'])
 
 if __name__ == '__main__':
     main()
