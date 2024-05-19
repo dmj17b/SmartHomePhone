@@ -8,14 +8,14 @@ import os
 class PaintCanvas:
     def __init__(self,master):
         self.master = master
-        self.frame = ttk.Frame(master=self.master)
+        self.frame = ttk.Frame(master=self.master,width=400,height=350)
         self.palette_frame = ttk.Frame(master=self.frame)
 
-        self.canvas = tk.Canvas(master=self.frame, width=800, height=480, bg='white')
+        self.canvas = tk.Canvas(master=self.frame, height=320, width=650, bg='white')
         self.colorVar = tk.StringVar(value='white')
         self.color_palette()
-        self.palette_frame.grid(row=0, column=0)
-        self.canvas.grid(row = 0, column = 1)
+        self.palette_frame.grid(row=1, column=0, sticky='e')
+        self.canvas.grid(row = 1, column = 1)
         self.canvas.bind("<B1-Motion>", self.paint)
 
     def paint(self, event):
@@ -29,8 +29,9 @@ class PaintCanvas:
         return
     
     def destroy(self):
-        self.frame.destroy()
         self.palette_frame.destroy()
+        self.frame.destroy()
+        self.canvas.destroy()
         return
     def color_palette(self):
         buttonWidth = 5

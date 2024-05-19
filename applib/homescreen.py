@@ -12,7 +12,7 @@ class HeaderWidget:
     def __init__(self, master):
         # Initialize the header widget
         self.master = master
-        self.frame = ttk.Frame(master=self.master)
+        self.frame = ttk.Frame(master=self.master,width=800,height=50)
 
         # Setting up time variables:
         t = time.localtime()
@@ -25,11 +25,11 @@ class HeaderWidget:
                                font='calibri 28',
                                foreground='cyan',
                                textvariable=self.localTime)
-        self.label.pack(pady=5)
+        self.label.grid(row=0, column=0)
 
         # Escape button:
         self.button = tk.Button(master=self.master, text='ESC', command=self.master.destroy, height=1, width=1, bg='red')
-        self.button.place(anchor='ne', x=790, y=10)
+        self.button.grid(row=0, column=1, sticky='ne',ipadx=10,pady=1,padx=1)
         self.frame.after(100, self.updateClock)
         return
 
@@ -51,10 +51,10 @@ class Menu:
         self.menuState = tk.IntVar(value=0)
 
 
-        self.padx = 5
-        self.pady = 5
-        self.ipadx = 25
-        self.ipady = 15
+        self.padx = 0
+        self.pady = 0
+        self.ipadx = 20
+        self.ipady = 5
 
         # Create a new frame under the master
         self.button_frame = ttk.Frame(master=self.master)
