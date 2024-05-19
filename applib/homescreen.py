@@ -13,6 +13,7 @@ class HeaderWidget:
         # Initialize the header widget
         self.master = master
         self.frame = ttk.Frame(master=self.master,width=800,height=50)
+        self.frame.grid_propagate(False)
 
         # Setting up time variables:
         t = time.localtime()
@@ -29,7 +30,9 @@ class HeaderWidget:
 
         # Escape button:
         self.button = tk.Button(master=self.master, text='ESC', command=self.master.destroy, height=1, width=1, bg='red')
-        self.button.grid(row=0, column=1, sticky='ne',ipadx=10,pady=1,padx=1)
+
+        self.button.grid(row=0, column=5,ipadx=10)
+        self.button.grid_anchor('ne')
         self.frame.after(100, self.updateClock)
         return
 

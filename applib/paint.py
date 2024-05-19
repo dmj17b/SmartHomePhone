@@ -8,10 +8,10 @@ import os
 class PaintCanvas:
     def __init__(self,master):
         self.master = master
-        self.frame = ttk.Frame(master=self.master,width=400,height=350)
+        self.frame = ttk.Frame(master=self.master,width=800,height=390)
         self.palette_frame = ttk.Frame(master=self.frame)
 
-        self.canvas = tk.Canvas(master=self.frame, height=320, width=650, bg='white')
+        self.canvas = tk.Canvas(master=self.frame, height=390, width=650, bg='white')
         self.colorVar = tk.StringVar(value='white')
         self.color_palette()
         self.palette_frame.grid(row=1, column=0, sticky='e')

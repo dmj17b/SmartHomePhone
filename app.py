@@ -12,36 +12,34 @@ import matplotlib.pyplot as plt
 def main(argv=None):
     # Function to switch to the home screen
     def homeScreen(event):
-        paint.destroy()
-        homescreen = ttk.Canvas(master=window, width=600, height=350, bg='white')
+        paint.frame.grid_forget()
         homescreen.grid(row=1, column=0)
 
     # Function to switch to the paint screen
     def paintScreen(event):
-        print('paintScreen')
-        global paint
-        paint = pt.PaintCanvas(master=window)
+        homescreen.grid_forget()
         paint.frame.grid(row=1, column=0)
 
-    # Function to switch to the phone screen
-    def phoneScreen(event):
-        if('paint' in globals()):
-            paint.destroy()
-        else:
-            print('paint does not exist')
+
 
     # Create the root window
     window = ttk.Window(themename='cyborg')
     window.bind('<Escape>', lambda e: window.destroy())
     window.title('HomePhone')
     window.geometry('800x480')
+    window.attributes('-fullscreen',True)
     window.resizable(False, False)
+
+    # Create each of the main widgets
     global paint
     paint = pt.PaintCanvas(master=window)
+    global homescreen
+    homescreen = ttk.Canvas(master=window, width=600, height=390, bg='white')
+    homescreen.grid(row=1, column=0)
 
     # Call the header widget (time, escape button):
     header = hs.HeaderWidget(master=window)
-    header.frame.grid(row=0, column=0, columnspan=8, sticky='n')
+    header.frame.grid(row=0, column=0, columnspan=7, sticky='ne')
 
     # Menu Widget:
     menu = hs.Menu(master=window)
@@ -49,7 +47,6 @@ def main(argv=None):
     menu.button_frame.grid_anchor('w')
     menu.paintbutton.bind('<Button-1>', func=paintScreen)
     menu.homebutton.bind('<Button-1>', func=homeScreen)
-    menu.phonebutton.bind('<Button-1>', func=phoneScreen)
 
     # run
     window.mainloop()
