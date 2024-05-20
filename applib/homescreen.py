@@ -7,14 +7,12 @@ import os
 
 import matplotlib.pyplot as plt
 
-class HeaderWidget:
+class Clock:
     # Header widget class for displaying time and GUI title
     def __init__(self, master):
         # Initialize the header widget
         self.master = master
         self.frame = ttk.Frame(master=self.master,width=800,height=50)
-        self.frame.grid_propagate(False)
-
         # Setting up time variables:
         t = time.localtime()
         current_time = time.strftime("%H:%M:%S", t)
@@ -27,19 +25,16 @@ class HeaderWidget:
                                foreground='cyan',
                                textvariable=self.localTime)
         self.label.grid(row=0, column=0)
-
-        # Escape button:
-        self.button = tk.Button(master=self.master, text='ESC', command=self.master.destroy, height=1, width=1, bg='red')
-
-        self.button.grid(row=0, column=5,ipadx=10)
-        self.button.grid_anchor('ne')
+        #Call 
         self.frame.after(100, self.updateClock)
         return
 
     def updateClock(self):
         # Update the displayed time every second
         t = time.localtime()
-        current_time = time.strftime("%H:%M:%S", t)
+        # current_time = time.strftime("%H:%M:%S", t)
+        #convert time to 12 hour format:
+        current_time = time.strftime("%I:%M:%S %p", t).lstrip("0")
         self.localTime.set(value=current_time)
         self.frame.after(1, self.updateClock)
         return
@@ -91,14 +86,14 @@ class Menu:
         self.smarthomebutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
 
         self.destroybutton = ttk.Button(master=self.button_frame,
-                        text='Destroy',
+                        text='Apps',
                         command=self.button_frame.destroy,
                         width=self.buttonWidth,
                         style='primary')
         self.destroybutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
 
         self.paintbutton = ttk.Button(master=self.button_frame,
-                        text='Paint',
+                        text='Settings',
                         width=self.buttonWidth,
                         style='primary')
         self.paintbutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)

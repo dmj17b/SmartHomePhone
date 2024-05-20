@@ -1,4 +1,3 @@
-import numpy as np
 import time
 import tkinter as tk
 import ttkbootstrap as ttk
@@ -7,7 +6,6 @@ from applib import homescreen as hs
 from applib import paint as pt
 import os
 
-import matplotlib.pyplot as plt
 
 def main(argv=None):
     # Function to switch to the home screen
@@ -37,14 +35,13 @@ def main(argv=None):
     homescreen = ttk.Canvas(master=window, width=600, height=390, bg='white')
     homescreen.grid(row=1, column=0)
 
-    # Call the header widget (time, escape button):
-    header = hs.HeaderWidget(master=window)
-    header.frame.grid(row=0, column=0, columnspan=7, sticky='ne')
+    # Call the clock widget:
+    clock = hs.Clock(master=window)
+    clock.frame.grid(row=0, column=0)
 
     # Menu Widget:
     menu = hs.Menu(master=window)
-    menu.button_frame.grid(row=3, column=0,sticky='s',columnspan=7)
-    menu.button_frame.grid_anchor('w')
+    menu.button_frame.grid(row=3, column=0)
     menu.paintbutton.bind('<Button-1>', func=paintScreen)
     menu.homebutton.bind('<Button-1>', func=homeScreen)
 
