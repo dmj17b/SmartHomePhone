@@ -25,7 +25,7 @@ def main(argv=None):
     window.bind('<Escape>', lambda e: window.destroy())
     window.title('HomePhone')
     window.geometry('800x480')
-    window.attributes('-fullscreen',True)
+    # window.attributes('-fullscreen',True)
     window.resizable(False, False)
 
     # Create each of the main widgets
@@ -50,4 +50,8 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
+    keyfile = open("openaikey.txt", "r")
+    openaikey = keyfile.read()
+    print(openaikey)
+
     main()
