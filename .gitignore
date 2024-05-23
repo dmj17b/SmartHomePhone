@@ -1,0 +1,11 @@
+# Ignore everything
+*
+
+# Except for applib, app.py, and readme
+!applib/homescreen.py
+!applib/paint.py
+!app.py
+!readme
+!README.md
+!Test.py
+!.gitignore

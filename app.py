@@ -25,7 +25,7 @@ def main(argv=None):
     window.bind('<Escape>', lambda e: window.destroy())
     window.title('HomePhone')
     window.geometry('800x480')
-    # window.attributes('-fullscreen',True)
+    window.attributes('-fullscreen',True)
     window.resizable(False, False)
 
     # Create each of the main widgets
