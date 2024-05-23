@@ -4,8 +4,14 @@
 # Except for applib, app.py, and readme
 !applib/homescreen.py
 !applib/paint.py
+!applib/assistants.py
 !app.py
 !readme
 !README.md
-!Test.py
 !.gitignore
+!test_assistant.py
+!test_google_cal_request.py
+!test_sst.py
+!test_sst2.py
+!test_schedule_assistant.py
+!test_list_audiodevices.py
