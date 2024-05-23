@@ -7,7 +7,7 @@ from typing_extensions import override
 # (You will need to create this text file. Contents should only include your key)
 keyfile = open("openaikey.txt", "r")
 OPEN_AI_KEY = keyfile.read()
-print(OPEN_AI_KEY)
+keyfile.close()
 
 # First, we create a EventHandler class to define
 # how we want to handle the events in the response stream.
