@@ -11,7 +11,7 @@
 !.gitignore
 !test_assistant.py
 !test_google_cal_request.py
-!test_sst.py
-!test_sst2.py
+!test_stt.py
+!test_stt2.py
 !test_schedule_assistant.py
 !test_list_audiodevices.py
