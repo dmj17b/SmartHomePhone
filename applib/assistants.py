@@ -62,6 +62,8 @@ class ScheduleAssistant:
         ) as stream:
             stream.until_done()
         stream.close()
+    def get_response(self):
+       self.client.beta.threads.runs.list(thread_id=self.thread.id)
     def new_thread(self):
        self.thread.delete()
        self.thread = self.client.beta.threads.create()
