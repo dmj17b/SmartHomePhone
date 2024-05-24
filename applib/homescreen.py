@@ -45,10 +45,7 @@ class Menu:
         # Initialize the menu
         self.master = master
         self.buttonHeight = 5
-        self.buttonWidth = 10
-        self.menuState = tk.IntVar(value=0)
-
-
+        self.buttonWidth = 9
         self.padx = 0
         self.pady = 0
         self.ipadx = 20
@@ -59,35 +56,30 @@ class Menu:
         # Create the buttons:
         self.homebutton = ttk.Button(master=self.button_frame,
                          text='Home',
-                         command=self.homepage,
-                         width=self.homepage,
+                         width=self.buttonWidth,
                          style='primary')
         self.homebutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
 
-        self.phonebutton = ttk.Button(master=self.button_frame,
-                          text='Phone',
-                          command=self.phone,
+        self.asstbutton = ttk.Button(master=self.button_frame,
+                          text='Assistants',
                           width=self.buttonWidth,
                           style='secondary')
-        self.phonebutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
+        self.asstbutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
 
         self.musicbutton = ttk.Button(master=self.button_frame,
                           text='Music',
-                          command=self.music,
                           width=self.buttonWidth,
                           style='warning')
         self.musicbutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
 
         self.smarthomebutton = ttk.Button(master=self.button_frame,
                           text='Smart Home',
-                          command=self.smartHome,
                           width=self.buttonWidth,
                           style='info')
         self.smarthomebutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
 
         self.destroybutton = ttk.Button(master=self.button_frame,
                         text='Apps',
-                        command=self.button_frame.destroy,
                         width=self.buttonWidth,
                         style='primary')
         self.destroybutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
@@ -97,38 +89,8 @@ class Menu:
                         width=self.buttonWidth,
                         style='primary')
         self.paintbutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
-
         return
 
-    def homepage(self):
-        # Action for the "Home" button
-        print("Home Screen:")
-        self.menuState.set(value=0)
-        return
-
-    def phone(self):
-        # Action for the "Phone" button
-        print("Phone app")
-        self.menuState.set(value=1)
-        return
-
-    def music(self):
-        # Action for the "Music" button
-        print("Music app")
-        self.menuState.set(value=2)
-        return
-
-    def smartHome(self):
-        # Action for the "Smart Home" button
-        print("Smart home app")
-        self.menuState.set(value=3)
-        return
-
-    def settings(self):
-        # Action for the "settings" button
-        print("Settings app")
-        self.menuState.set(value=4)
-        return
     
 class HomePage():
     def __init__(self):

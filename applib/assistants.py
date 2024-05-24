@@ -6,6 +6,7 @@ import openai
 import speech_recognition as sr
 from openai import AssistantEventHandler
 from typing_extensions import override
+import threading
 
 class STT:
     def __init__(self):
@@ -15,7 +16,7 @@ class STT:
     def calibrateMic(self):
         with self.source:
             self.recognizer.adjust_for_ambient_noise(self.source)
-        input("Calibration complete. Press Enter to continue...")
+
     def getRequest(self):
         print("Say something!")
         with self.source:
@@ -42,21 +43,50 @@ class ScheduleAssistant:
         # Initialize the openai client
         self.client = openai.OpenAI(api_key=OPEN_AI_KEY)
         # Initialize the thread and assistant
-        self.thread = self.client.beta.threads.create()
+        self.openai_thread = self.client.beta.threads.create()
         self.assistant_id = "asst_y2dZ6Vx8klSm0BSMZU9GeTLA"
         self.stt = stt
         self.master = master
+        self.frame = ttk.Frame(master=self.master,width=800,height=390)
+        self.frame.configure(width=800,height=390)
 
+        padx = 5
+        pady = 5
+        ipadx = 10
+        ipady= 10
+
+        # Create the listen button:
+        self.listen_button = ttk.Button(master=self.frame,
+                                      text="Start Listening",
+                                      command=self.start_listening_thread,
+                                      style = 'light')
+        
+        self.listen_button.grid(row=0,column=0,ipadx=ipadx,ipady=ipady,padx=padx,pady=pady,sticky='w')
+
+        # Create the stop button:
+        self.stop_button = ttk.Button(master=self.frame,
+                                    text="Stop Listening",
+                                    command=self.stop_listening_thread,
+                                    state=tk.DISABLED,
+                                    style='warning')
+
+        self.stop_button.grid(row=1,column=0,ipadx=ipadx,ipady=ipady,padx=padx,pady=pady,sticky='w')
+
+        
+        self.transcription_text = tk.Text(master=self.frame, height=20, width=78)
+        self.transcription_text.grid(row=0,column=1,rowspan=2,sticky='e')
+
+    # Gets speech input and sends message to openai assistant
     def call_assistant(self):
         query = self.stt.getRequest()
         message = self.client.beta.threads.messages.create(
-            thread_id=self.thread.id,
+            thread_id=self.openai_thread.id,
             content = query,
             role="user",
         )
     def open_response_stream(self):
         with self.client.beta.threads.runs.stream(
-            thread_id=self.thread.id,
+            thread_id=self.openai_thread.id,
             assistant_id=self.assistant_id,
             event_handler=EventHandler(),
         ) as stream:
@@ -64,12 +94,44 @@ class ScheduleAssistant:
         stream.close()
     def get_response(self):
        self.client.beta.threads.runs.list(thread_id=self.thread.id)
-    def new_thread(self):
-       self.thread.delete()
-       self.thread = self.client.beta.threads.create()
-    def display_app(self):
-       frame = ttk.Frame(self.master)
+    def new_openai_thread(self):
+       self.openai_thread.delete()
+       self.openai_thread = self.client.beta.threads.create()
 
+    # Stuff to help with threading:
+    def start_listening_thread(self):
+        self.stop_listening = False
+        self.listen_button.config(state=tk.DISABLED)
+        self.stop_button.config(state=tk.NORMAL)
+        self.thread = threading.Thread(target=self.listen)
+        self.thread.start()
+
+    def stop_listening_thread(self):
+        self.stop_listening = True
+        self.listen_button.config(state=tk.NORMAL)
+        self.stop_button.config(state=tk.DISABLED)
+
+    def listen(self):
+        recognizer = sr.Recognizer()
+        recognizer.pause_threshold = 1.0  # Adjust as needed
+
+        with sr.Microphone() as source:
+            print("Adjusting for ambient noise...")
+            recognizer.adjust_for_ambient_noise(source)
+            print("Listening... Press the stop button to stop.")
+
+            while not self.stop_listening:
+                try:
+                    audio = recognizer.listen(source, timeout=1, phrase_time_limit=10)
+                    transcription = recognizer.recognize_google(audio)
+                    print("Google Web Speech API Transcription: " + transcription)
+                    self.transcription_text.insert(tk.END, transcription + "\n")
+                except sr.WaitTimeoutError:
+                    continue
+                except sr.UnknownValueError:
+                    print("Google Web Speech API could not understand audio")
+                except sr.RequestError as e:
+                    print(f"Could not request results from Google Web Speech API; {e}")
 
 
 # EventHandler class to define
