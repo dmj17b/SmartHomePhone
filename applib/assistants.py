@@ -23,20 +23,6 @@ class STT:
         with self.source:
             self.recognizer.adjust_for_ambient_noise(self.source)
 
-    # Function to get the user's request (without threading)
-    def getRequest(self):
-        print("Say something!")
-        with self.source:
-            audio = self.recognizer.listen(self.source,timeout=15)
-        try:
-            print("You said: " + self.recognizer.recognize_google(audio))
-            return self.recognizer.recognize_google(audio)
-        except sr.UnknownValueError:
-            print("Google Speech Recognition could not understand audio")
-            return "Error, tell user to repeat request"
-        except sr.RequestError as e:
-            print(f"Could not request results from Google Speech Recognition service; {e}")
-            return "Error, tell user to repeat request"
         
     # Listening with threading:
     def start_listening_thread(self):
@@ -50,12 +36,10 @@ class STT:
         self.rec_on = False
 
     def listen(self):
-        recognizer = sr.Recognizer()
+        recognizer = self.recognizer
         recognizer.pause_threshold = 1.0  # Adjust as needed
         self.rec_on = True
         with sr.Microphone() as source:
-            print("Adjusting for ambient noise...")
-            recognizer.adjust_for_ambient_noise(source)
             print("Listening... Press the stop button to stop.")
 
             while not self.stop_listening:
@@ -124,15 +108,15 @@ class ScheduleAssistant(AssistantEventHandler):
                                         command = self.clear_text,
                                         style = 'info')
         # Place the buttons in the grid:
-        self.listen_button.grid(row=0,column=0,ipadx=ipadx,ipady=ipady,padx=padx,pady=pady,sticky='w')
-        self.stop_button.grid(row=1,column=0,ipadx=ipadx,ipady=ipady,padx=padx,pady=pady,sticky='w')
-        self.clear_button.grid(row=2,column=0,ipadx=ipadx,ipady=ipady,padx=padx,pady=pady,sticky='w')
+        self.listen_button.grid(row=0,column=0,ipadx=ipadx,ipady=ipady,padx=padx,pady=pady,sticky='e')
+        self.stop_button.grid(row=1,column=0,ipadx=ipadx,ipady=ipady,padx=padx,pady=pady,sticky='e')
+        self.clear_button.grid(row=2,column=0,ipadx=ipadx,ipady=ipady,padx=padx,pady=pady,sticky='e')
 
         # Shows the text transcription between user and assistant
         self.transcription_text = tk.Text(master=self.frame,
-                                            height=20,
-                                            width=78,
-                                            font="Helvetica 12",
+                                            height=16.25,
+                                            width=53,
+                                            font="Helvetica 16",
                                             wrap=tk.WORD)
         
 
@@ -190,6 +174,7 @@ class ScheduleAssistant(AssistantEventHandler):
         
     def display_response(self):
         self.transcription_text.insert(tk.END, "\n\n" + self.name + "> " + self.asst_response + "\n")
+       
 
 
 
