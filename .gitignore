@@ -15,3 +15,4 @@
 !test_schedule_assistant.py
 !test_list_audiodevices.py
 !applib/assistants.py
+!rpi_app.py

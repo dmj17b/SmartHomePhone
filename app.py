@@ -26,9 +26,6 @@ def main(argv=None):
         paint.frame.grid_forget()
         scarlett.frame.grid(row=1,column=0)
 
-    # Create stt object:
-    stt = asst.STT()
-    stt.calibrateMic()
 
 
     # Create the root window
@@ -38,6 +35,10 @@ def main(argv=None):
     window.geometry('800x480')
     window.attributes('-fullscreen',True)
     window.resizable(False, False)
+    
+    # Create stt object:
+    stt = asst.STT(master=window)
+    stt.calibrateMic()
 
     # Create each of the main widgets
     global paint

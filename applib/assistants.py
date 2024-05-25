@@ -14,7 +14,7 @@ class STT:
         self.recognizer = sr.Recognizer()
         self.mic_index = 3
         self.source = sr.Microphone(device_index=self.mic_index, sample_rate=44100, chunk_size=1024)
-        
+        self.rec_on = False
         # Tkinter string variable to hold the transcription:
         self.transcription = tk.StringVar(master=master)
 
@@ -47,11 +47,12 @@ class STT:
 
     def stop_listening_thread(self):
         self.stop_listening = True
+        self.rec_on = False
 
     def listen(self):
         recognizer = sr.Recognizer()
         recognizer.pause_threshold = 1.0  # Adjust as needed
-
+        self.rec_on = True
         with sr.Microphone() as source:
             print("Adjusting for ambient noise...")
             recognizer.adjust_for_ambient_noise(source)
@@ -95,42 +96,55 @@ class ScheduleAssistant(AssistantEventHandler):
         self.frame.configure(width=800,height=390)
 
 
+
         padx = 5
         pady = 5
         ipadx = 10
         ipady= 10
-
+        button_width = 10
         # Create the listen button:
         self.listen_button = ttk.Button(master=self.frame,
+                                      width=button_width,
                                       text="Start Listening",
                                       command = self.start_button_func,
-                                      style = 'light')
-        # Bind listen button to start listening thread
-
+                                      style = 'primary')
 
         # Create the stop button:
         self.stop_button = ttk.Button(master=self.frame,
+                                    width=button_width,
                                     text="Stop Listening",
                                     state=tk.DISABLED,
                                     command = self.stop_button_func,
                                     style='warning')
                                     
+        #Button to clear the text:
+        self.clear_button = ttk.Button(master=self.frame,
+                                       width=button_width,
+                                        text = "Clear",
+                                        command = self.clear_text,
+                                        style = 'info')
+        # Place the buttons in the grid:
         self.listen_button.grid(row=0,column=0,ipadx=ipadx,ipady=ipady,padx=padx,pady=pady,sticky='w')
         self.stop_button.grid(row=1,column=0,ipadx=ipadx,ipady=ipady,padx=padx,pady=pady,sticky='w')
+        self.clear_button.grid(row=2,column=0,ipadx=ipadx,ipady=ipady,padx=padx,pady=pady,sticky='w')
 
         # Shows the text transcription between user and assistant
         self.transcription_text = tk.Text(master=self.frame,
                                             height=20,
                                             width=78,
+                                            font="Helvetica 12",
                                             wrap=tk.WORD)
         
-        self.transcription_text.grid(row=0,column=1,rowspan=2,sticky='e')
 
+        self.transcription_text.grid(row=0,column=1,rowspan=3,sticky='e')
         self.stt.transcription.trace_add('write',self.update_text)
 
+    def clear_text(self):
+       self.transcription_text.delete(1.0,tk.END)
     def update_text(self,*args):
         query = self.stt.transcription.get()
         self.transcription_text.insert(tk.END,"\nuser> " + query + "\n")
+        self.transcription_text.see(tk.END)
         threading.Thread(target=self.call_assistant, args=(query,)).start()
 
 # Function to start the listening thread
@@ -138,6 +152,7 @@ class ScheduleAssistant(AssistantEventHandler):
         self.stt.start_listening_thread()
         self.listen_button.config(state=tk.DISABLED)
         self.stop_button.config(state=tk.NORMAL)
+
 # Function to stop the listening thread
     def stop_button_func(self):
         self.stt.stop_listening_thread()
@@ -174,7 +189,7 @@ class ScheduleAssistant(AssistantEventHandler):
 
         
     def display_response(self):
-        self.transcription_text.insert(tk.END, "\n" + self.name + "> " + self.asst_response + "\n")
+        self.transcription_text.insert(tk.END, "\n\n" + self.name + "> " + self.asst_response + "\n")
 
 
 
@@ -190,14 +205,14 @@ class EventHandler(AssistantEventHandler):
 
   @override
   def on_text_created(self, text) -> None:
-    print(f"\nassistant > ", end="", flush=True)
     self.asst.transcription_text.insert(tk.END,"\nassistant>")
 
       
   @override
   def on_text_delta(self, delta, snapshot):
-    print(delta.value, end="", flush=True)
     self.asst.transcription_text.insert(tk.END,delta.value)
+    self.asst.transcription_text.see(tk.END)
+
       
   def on_tool_call_created(self, tool_call):
     print(f"\nassistant > {tool_call.type}\n", flush=True)
