@@ -53,15 +53,37 @@ class STT:
                 except sr.RequestError as e:
                     print(f"Could not request results from Google Web Speech API; {e}")
 
+# Helper class to create a touch scrollable text field
+class TouchScrollableText(tk.Text):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.bind('<Button-1>', self.on_touch_start)
+        self.bind('<B1-Motion>', self.on_touch_move)
+        self.bind('<ButtonRelease-1>', self.on_touch_end)
+        self._start_y = None
+        self._scroll_start_y = None
 
+    def on_touch_start(self, event):
+        self._start_y = event.y
+        self._scroll_start_y = self.yview()[0]
+
+    def on_touch_move(self, event):
+        if self._start_y is not None:
+            delta_y = event.y - self._start_y
+            new_y = self._scroll_start_y - delta_y / self.winfo_height()
+            self.yview_moveto(new_y)
+
+    def on_touch_end(self, event):
+        self._start_y = None
+        self._scroll_start_y = None
 
 
 # Specifically calls an assistant designed to help with scheduling
 # (Her name is Scarlett)
 class ScheduleAssistant(AssistantEventHandler):
     def __init__(self,master,stt):
-        self.name = "Scarlett"
-
+        self.asst_name = "Scarlett"
+        self.user_name = "David"
         # Read in the openai key from text file
         keyfile = open("openaikey.txt", "r")
         OPEN_AI_KEY = keyfile.read()
@@ -78,7 +100,8 @@ class ScheduleAssistant(AssistantEventHandler):
         self.master = master
         self.frame = ttk.Frame(master=self.master,width=800,height=390)
         self.frame.configure(width=800,height=390)
-
+        self._start_y = None
+        self._scroll_start_y = None
 
 
         padx = 5
@@ -113,21 +136,38 @@ class ScheduleAssistant(AssistantEventHandler):
         self.clear_button.grid(row=2,column=0,ipadx=ipadx,ipady=ipady,padx=padx,pady=pady,sticky='e')
 
         # Shows the text transcription between user and assistant
-        self.transcription_text = tk.Text(master=self.frame,
+        self.transcription_text = TouchScrollableText(master=self.frame,
                                             height=16.25,
                                             width=53,
                                             font="Helvetica 16",
                                             wrap=tk.WORD)
+        self.transcription_text.tag_configure("user_tag", foreground="cyan", font=("Helvetica", 16, "bold"))
+        self.transcription_text.tag_configure("asst_tag", foreground="yellow", font=("Helvetica", 16, "bold"))
         
+        self.transcription_text.tag_configure("msg_tag", foreground="white", font=("Helvetica", 14))
 
+
+        #Pack into the grid
         self.transcription_text.grid(row=0,column=1,rowspan=3,sticky='e')
+        # Update text box any time the transcription changes
         self.stt.transcription.trace_add('write',self.update_text)
 
+# Get time in am/pm
+    def get_time(self):
+        t = time.localtime
+        current_time = time.strftime("%I:%M:%S %p", t).lstrip("0")
+        return current_time
+
+
+# Clears the text field
     def clear_text(self):
        self.transcription_text.delete(1.0,tk.END)
+
+# Adds user transcription to the text field
     def update_text(self,*args):
         query = self.stt.transcription.get()
-        self.transcription_text.insert(tk.END,"\nuser> " + query + "\n")
+        self.transcription_text.insert(tk.END,"\n\n"+self.user_name+"> ","user_tag")
+        self.transcription_text.insert(tk.END,query + "\n","msg_tag")
         self.transcription_text.see(tk.END)
         threading.Thread(target=self.call_assistant, args=(query,)).start()
 
@@ -162,7 +202,7 @@ class ScheduleAssistant(AssistantEventHandler):
         self.response_thread = threading.Thread(target=self.stream_response)
         self.response_thread.start()
 
-
+# Function to call event handler and stream GPT response
     def stream_response(self):
        with self.client.beta.threads.runs.stream(
             thread_id=self.openai_thread.id,
@@ -172,8 +212,7 @@ class ScheduleAssistant(AssistantEventHandler):
             stream.until_done()
 
         
-    def display_response(self):
-        self.transcription_text.insert(tk.END, "\n\n" + self.name + "> " + self.asst_response + "\n")
+
        
 
 
@@ -182,32 +221,40 @@ class ScheduleAssistant(AssistantEventHandler):
 
 # EventHandler class to define
 # how we want to handle the events in the response stream.
-class EventHandler(AssistantEventHandler):    
-  def __init__(self,asst):
-    super().__init__()
-    self.asst = asst
-  
 
-  @override
-  def on_text_created(self, text) -> None:
-    self.asst.transcription_text.insert(tk.END,"\nassistant>")
+ 
+class EventHandler(AssistantEventHandler):
+    def __init__(self, asst):
+        super().__init__()
+        self.asst = asst
 
-      
-  @override
-  def on_text_delta(self, delta, snapshot):
-    self.asst.transcription_text.insert(tk.END,delta.value)
-    self.asst.transcription_text.see(tk.END)
+    @override
+    def on_text_created(self, text) -> None:
+        self.asst.transcription_text.insert(tk.END, "\n" + self.asst.asst_name + "> ", "asst_tag")
 
-      
-  def on_tool_call_created(self, tool_call):
-    print(f"\nassistant > {tool_call.type}\n", flush=True)
-  
-  def on_tool_call_delta(self, delta, snapshot):
-    if delta.type == 'code_interpreter':
-      if delta.code_interpreter.input:
-        print(delta.code_interpreter.input, end="", flush=True)
-      if delta.code_interpreter.outputs:
-        print(f"\n\noutput >", flush=True)
-        for output in delta.code_interpreter.outputs:
-          if output.type == "logs":
-            print(f"\n{output.logs}", flush=True)
+    @override
+    def on_text_delta(self, delta, snapshot):
+        self.asst.transcription_text.insert(tk.END, delta.value, "msg_tag")
+        self.asst.transcription_text.see(tk.END)
+
+    @override
+    def on_event(self, event):
+        if event.event == 'thread.run.requires_action':
+            run_id = event.data.id
+            self.handle_requires_action(event.data, run_id)
+
+    def handle_requires_action(self, data, run_id):
+        tool_outputs = []
+        for tool in data.required_action.submit_tool_outputs.tool_calls:
+            if tool.function.name == "get_time":
+                current_time = self.asst.get_time()
+                tool_outputs.append({"tool_call_id": tool.id, "output": current_time})
+        self.submit_tool_outputs(tool_outputs, run_id)
+
+    def submit_tool_outputs(self, tool_outputs, run_id):
+        self.asst.client.beta.threads.runs.submit_tool_outputs_stream(
+            thread_id=self.asst.openai_thread.id,
+            run_id=run_id,
+            tool_outputs=tool_outputs,
+            event_handler=EventHandler(self.asst),
+        ) 
