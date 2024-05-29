@@ -185,6 +185,8 @@ class ScheduleAssistant(AssistantEventHandler):
 
 
 # Function to call the assistant
+
+    # Function to call the assistant
     def call_assistant(self, query):
         print("Calling assistant!")
         # Sending message to assistant
@@ -193,14 +195,42 @@ class ScheduleAssistant(AssistantEventHandler):
             content=query,
             role="user",
         )
+
+        # Check for existing active run
+        active_run = self.get_active_run()
+        
+        if active_run:
+            print("Waiting for existing run to complete...")
+            self.wait_for_run_completion(active_run.id)
+        
         # Running the assistant
         self.run = self.client.beta.threads.runs.create_and_poll(
             thread_id=self.openai_thread.id,
             assistant_id=self.assistant_id
         )
+        self.run_id = self.run.id
         # Retrieving response from assistant:
         self.response_thread = threading.Thread(target=self.stream_response)
         self.response_thread.start()
+
+    def get_active_run(self):
+        runs = self.client.beta.threads.runs.list(thread_id=self.openai_thread.id)
+        for run in runs.data:
+            if run.status == "active":
+                return run
+        return None
+
+    def wait_for_run_completion(self, run_id):
+        while True:
+            run_status = self.client.beta.threads.runs.retrieve(
+                thread_id=self.openai_thread.id,
+                run_id=run_id
+            )
+            if run_status.status == "completed":
+                break
+            time.sleep(1)
+
+
 
 # Function to call event handler and stream GPT response
     def stream_response(self):
@@ -241,6 +271,7 @@ class EventHandler(AssistantEventHandler):
     def on_event(self, event):
         if event.event == 'thread.run.requires_action':
             run_id = event.data.id
+            self.asst.run_id=run_id
             self.handle_requires_action(event.data, run_id)
 
     def handle_requires_action(self, data, run_id):
@@ -252,9 +283,14 @@ class EventHandler(AssistantEventHandler):
         self.submit_tool_outputs(tool_outputs, run_id)
 
     def submit_tool_outputs(self, tool_outputs, run_id):
-        self.asst.client.beta.threads.runs.submit_tool_outputs_stream(
+        with self.asst.client.beta.threads.runs.submit_tool_outputs_stream(
             thread_id=self.asst.openai_thread.id,
-            run_id=run_id,
+            run_id=self.asst.run_id,
             tool_outputs=tool_outputs,
             event_handler=EventHandler(self.asst),
-        ) 
+        ) as stream:
+            for text in stream.text_deltas:
+                print(text,end="",flush=True)
+                self.asst.transcription_text.insert(tk.END, text, "msg_tag")
+                self.asst.transcription_text.see(tk.END)
+                
