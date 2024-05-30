@@ -1,11 +1,9 @@
-import numpy as np
 import time
 import tkinter as tk
 import ttkbootstrap as ttk
 from PIL import ImageTk, Image
 import os
 
-import matplotlib.pyplot as plt
 
 class Clock:
     # Header widget class for displaying time and GUI title
