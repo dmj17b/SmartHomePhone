@@ -12,7 +12,7 @@ class STT:
     def __init__(self,master):
         # Setting up recognizer and mic:
         self.recognizer = sr.Recognizer()
-        self.mic_index = 3
+        self.mic_index = 0
         self.source = sr.Microphone(device_index=self.mic_index, sample_rate=44100, chunk_size=1024)
         self.rec_on = False
         # Tkinter string variable to hold the transcription:
@@ -44,7 +44,7 @@ class STT:
 
             while not self.stop_listening:
                 try:
-                    audio = recognizer.listen(source, timeout=1, phrase_time_limit=10)
+                    audio = recognizer.listen(source, timeout=3)
                     self.transcription.set(value = recognizer.recognize_google(audio))
                 except sr.WaitTimeoutError:
                     continue
@@ -82,7 +82,7 @@ class TouchScrollableText(tk.Text):
 # (Her name is Scarlett)
 class ScheduleAssistant(AssistantEventHandler):
     def __init__(self,master,stt):
-        self.asst_name = "Scarlett"
+        self.asst_name = "Donna"
         self.user_name = "David"
         # Read in the openai key from text file
         keyfile = open("openaikey.txt", "r")
@@ -153,10 +153,13 @@ class ScheduleAssistant(AssistantEventHandler):
         self.stt.transcription.trace_add('write',self.update_text)
 
 # Get time in am/pm
-    def get_time(self):
-        t = time.localtime
-        current_time = time.strftime("%I:%M:%S %p", t).lstrip("0")
-        return current_time
+    def get_time_date(self):
+        # Get the time and date
+        current_time = time.strftime("%I:%M %p")
+        current_date = time.strftime("%B %d, %Y")
+        time_date_string = f"{current_time} on {current_date}"
+        return time_date_string
+
 
 
 # Clears the text field
@@ -184,6 +187,7 @@ class ScheduleAssistant(AssistantEventHandler):
         self.stop_button.config(state=tk.DISABLED)
 
 
+
 # Function to call the assistant
 
     # Function to call the assistant
@@ -196,41 +200,12 @@ class ScheduleAssistant(AssistantEventHandler):
             role="user",
         )
 
-        # Check for existing active run
-        active_run = self.get_active_run()
-        
-        if active_run:
-            print("Waiting for existing run to complete...")
-            self.wait_for_run_completion(active_run.id)
-        
-        # Running the assistant
-        self.run = self.client.beta.threads.runs.create_and_poll(
-            thread_id=self.openai_thread.id,
-            assistant_id=self.assistant_id
-        )
-        self.run_id = self.run.id
+
+
         # Retrieving response from assistant:
         self.response_thread = threading.Thread(target=self.stream_response)
         self.response_thread.start()
-
-    def get_active_run(self):
-        runs = self.client.beta.threads.runs.list(thread_id=self.openai_thread.id)
-        for run in runs.data:
-            if run.status == "active":
-                return run
-        return None
-
-    def wait_for_run_completion(self, run_id):
-        while True:
-            run_status = self.client.beta.threads.runs.retrieve(
-                thread_id=self.openai_thread.id,
-                run_id=run_id
-            )
-            if run_status.status == "completed":
-                break
-            time.sleep(1)
-
-
+    
 
 # Function to call event handler and stream GPT response
     def stream_response(self):
@@ -271,26 +246,24 @@ class EventHandler(AssistantEventHandler):
     def on_event(self, event):
         if event.event == 'thread.run.requires_action':
             run_id = event.data.id
-            self.asst.run_id=run_id
             self.handle_requires_action(event.data, run_id)
 
     def handle_requires_action(self, data, run_id):
+        print("Handling required action")
         tool_outputs = []
         for tool in data.required_action.submit_tool_outputs.tool_calls:
-            if tool.function.name == "get_time":
-                current_time = self.asst.get_time()
+            if tool.function.name == "get_time_date":
+                current_time = self.asst.get_time_date()
                 tool_outputs.append({"tool_call_id": tool.id, "output": current_time})
         self.submit_tool_outputs(tool_outputs, run_id)
 
     def submit_tool_outputs(self, tool_outputs, run_id):
         with self.asst.client.beta.threads.runs.submit_tool_outputs_stream(
-            thread_id=self.asst.openai_thread.id,
-            run_id=self.asst.run_id,
+            thread_id=self.current_run.thread_id,
+            run_id=self.current_run.id,
             tool_outputs=tool_outputs,
             event_handler=EventHandler(self.asst),
         ) as stream:
             for text in stream.text_deltas:
-                print(text,end="",flush=True)
-                self.asst.transcription_text.insert(tk.END, text, "msg_tag")
-                self.asst.transcription_text.see(tk.END)
-                
+                print(text, end="", flush=True)
+            print()

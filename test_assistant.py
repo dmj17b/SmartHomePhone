@@ -1,7 +1,8 @@
 from applib import assistants as asst
 import tkinter as tk
+import ttkbootstrap as ttk
+root = ttk.Window(themename='cyborg')
 
-root = tk.Tk()
 # Initialize speech to text helper class:
 stt = asst.STT(root)
 stt.calibrateMic()

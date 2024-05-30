@@ -12,19 +12,19 @@ def main(argv=None):
     # Function to switch to the home screen
     def homeScreen(event):
         paint.frame.grid_forget()
-        scarlett.frame.grid_forget()
+        donna.frame.grid_forget()
         homescreen.grid(row=1, column=0)
 
     # Function to switch to the paint screen
     def paintScreen(event):
         homescreen.grid_forget()
-        scarlett.frame.grid_forget()
+        donna.frame.grid_forget()
         paint.frame.grid(row=1, column=0)
 
     def assistant(event):
         homescreen.grid_forget()
         paint.frame.grid_forget()
-        scarlett.frame.grid(row=1,column=0)
+        donna.frame.grid(row=1,column=0)
 
 
 
@@ -44,9 +44,9 @@ def main(argv=None):
     global paint
     paint = pt.PaintCanvas(master=window)
     global homescreen
-    #Initialize scheduling assistant (scarlett)
-    global scarlett
-    scarlett = asst.ScheduleAssistant(master=window,stt=stt)
+    #Initialize scheduling assistant (donna)
+    global donna
+    donna = asst.ScheduleAssistant(master=window,stt=stt)
     homescreen = ttk.Canvas(master=window, width=600, height=390, bg='white')
     homescreen.grid(row=1, column=0)
 
