@@ -50,7 +50,7 @@ def main(argv=None):
     window.attributes('-fullscreen',True)
     window.resizable(False, False)
 
-    stt = asst.STT(master=window)    
+    stt = asst.STT(master=window,mic_index=3)    
 
 
     # Create each of the main widgets

@@ -9,10 +9,10 @@ from typing_extensions import override
 import threading
 
 class STT:
-    def __init__(self,master):
+    def __init__(self,master,mic_index):
         # Setting up recognizer and mic:
         self.recognizer = sr.Recognizer()
-        self.mic_index = 0
+        self.mic_index = mic_index
         self.source = sr.Microphone(device_index=self.mic_index, sample_rate=44100, chunk_size=1024)
         self.rec_on = False
         # Tkinter string variable to hold the transcription:
@@ -44,7 +44,7 @@ class STT:
 
             while not self.stop_listening:
                 try:
-                    audio = recognizer.listen(source, timeout=3)
+                    audio = recognizer.listen(source, timeout=1.5)
                     self.transcription.set(value = recognizer.recognize_google(audio))
                 except sr.WaitTimeoutError:
                     continue
