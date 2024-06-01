@@ -91,7 +91,7 @@ def main(argv=None):
     window.grid_rowconfigure(1,weight=1)
     window.grid_rowconfigure(3,weight=3)
     window.grid_columnconfigure(0,weight=1)
-    menu.paintbutton.bind('<Button-1>', func=paintScreen)
+    menu.settings_button.bind('<Button-1>', func=paintScreen)
     menu.homebutton.bind('<Button-1>', func=homeScreen)
     menu.asstbutton.bind('<Button-1>', func=assistant)
 
