@@ -16,3 +16,4 @@
 !test_list_audiodevices.py
 !applib/assistants.py
 !rpi_app.py
+!applib/stt.py
