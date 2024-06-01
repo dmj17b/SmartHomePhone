@@ -8,6 +8,7 @@ import os
 from applib import assistants as asst
 from applib import stt as s2t
 from applib import settings as stg
+from applib import settings as stg
 
 
 def main(argv=None):
@@ -16,6 +17,7 @@ def main(argv=None):
         paint.frame.grid_forget()
         donna.frame.grid_forget()
         sett.frame.grid_forget()
+        sett.frame.grid_forget()
         homescreen.grid(row=1, column=0)
 
     # Function to switch to the paint screen
@@ -23,13 +25,21 @@ def main(argv=None):
         homescreen.grid_forget()
         donna.frame.grid_forget()
         sett.frame.grid_forget()
+        sett.frame.grid_forget()
         paint.frame.grid(row=1, column=0)
 
     def assistant(event):
         homescreen.grid_forget()
         paint.frame.grid_forget()
         sett.frame.grid_forget()
+        sett.frame.grid_forget()
         donna.frame.grid(row=1,column=0)
+
+    def settings_screen(event):
+        homescreen.grid_forget()
+        paint.frame.grid_forget()
+        donna.frame.grid_forget()
+        sett.frame.grid(row=1,column=0,sticky='w')
 
     def settings_screen(event):
         homescreen.grid_forget()
@@ -44,25 +54,32 @@ def main(argv=None):
     window.bind('<Escape>', lambda e: window.destroy())
     window.title('HomePhone')
     window.geometry('1900x1200')
+    window.geometry('1900x1200')
     # window.attributes('-fullscreen',True)
+    window.resizable(False, False)
     window.resizable(False, False)
     
     # Create stt object:
-    stt = s2t.STT(master=window,mic_index=0)
-    stt.calibrateMic()
+    stt = s2t.STT(master=window,mic_index=0,mic_index=1)
 
     # Create each of the main widgets
     global paint
     paint = pt.PaintCanvas(master=window)
+
 
     #Initialize scheduling assistant (donna)
     global donna
     donna = asst.ScheduleAssistant(master=window,stt=stt)
 
     # Create the homescreen widget (placeholder):
+
+    # Create the homescreen widget (placeholder):
     homescreen = ttk.Canvas(master=window, width=600, height=390, bg='white')
     homescreen.grid(row=1, column=0)
 
+    # Create the settings widget:
+    global sett
+    sett = stg.Settings(master=window)
     # Create the settings widget:
     global sett
     sett = stg.Settings(master=window)
@@ -83,7 +100,9 @@ def main(argv=None):
     menu.asstbutton.bind('<Button-1>', func=assistant)
 
     # run
+    window.after(100, stt.calibrateMic())
     window.mainloop()
+
 
 
 if __name__ == "__main__":

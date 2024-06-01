@@ -7,7 +7,18 @@ import speech_recognition as sr
 from openai import AssistantEventHandler
 from typing_extensions import override
 import threading
+import datetime
+import os.path
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
 
+<<<<<<< HEAD
+=======
+# If modifying these SCOPES, delete the file token.json.
+SCOPES = ["https://www.googleapis.com/auth/calendar"]
+>>>>>>> aacea38c3f231deac1056fddd5236c6f4651473f
 
 
 # Specifically calls an assistant designed to help with scheduling
@@ -28,6 +39,8 @@ class ScheduleAssistant(AssistantEventHandler):
         self.openai_thread = self.client.beta.threads.create()
         self.assistant_id = "asst_y2dZ6Vx8klSm0BSMZU9GeTLA"
         self.asst_response = ""
+        # Initialize the calendar id
+        self.calendar_id = 'd235ade838a883c134c4780cb0cb45c64c8ad09add4bd6607f5680df32b7593a@group.calendar.google.com'
         self.stt = stt
         self.master = master
         self.frame = ttk.Frame(master=self.master,width=800,height=390)
@@ -84,13 +97,6 @@ class ScheduleAssistant(AssistantEventHandler):
         # Update text box any time the transcription changes
         self.stt.transcription.trace_add('write',self.update_text)
 
-# Get time in am/pm
-    def get_time_date(self):
-        # Get the time and date
-        current_time = time.strftime("%I:%M %p")
-        current_date = time.strftime("%B %d, %Y")
-        time_date_string = f"{current_time} on {current_date}"
-        return time_date_string
 
 
 
@@ -126,7 +132,11 @@ class ScheduleAssistant(AssistantEventHandler):
     # Function to call the assistant
     def call_assistant(self, query):
         print("Calling assistant!")
+<<<<<<< HEAD
         # self.stt.stop_listening_thread()
+=======
+        self.stop_button_func()
+>>>>>>> aacea38c3f231deac1056fddd5236c6f4651473f
 
         # Sending message to assistant
         message = self.client.beta.threads.messages.create(
@@ -150,14 +160,78 @@ class ScheduleAssistant(AssistantEventHandler):
             event_handler=EventHandler(self),
             ) as stream:
             stream.until_done()
+            self.start_button_func()
 
+############################# OPENAI TOOLS #####################################
+# Get time in am/pm
+    def get_time_date(self):
+        # Get the time and date
+        current_time = time.strftime("%I:%M %p")
+        current_date = time.strftime("%B %d, %Y")
+        time_date_string = f"{current_time} on {current_date}"
+        return time_date_string
+    
+    def get_upcoming_events(self):
+        creds = None
+        # The file token.json stores the user's access and refresh tokens, and is
+        # created automatically when the authorization flow completes for the first
+        # time.
+        if os.path.exists('token.json'):
+            creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+        # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    'credentials.json', SCOPES)
+                creds = flow.run_local_server(port=0)
+            # Save the credentials for the next run
+            with open('token.json', 'w') as token:
+                token.write(creds.to_json())
+
+        service = build('calendar', 'v3', credentials=creds)
+
+        # Call the Calendar API
+        now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+        print('Getting the upcoming 10 events')
+        events_result = service.events().list(calendarId='primary', timeMin=now,
+                                            maxResults=10, singleEvents=True,
+                                            orderBy='startTime').execute()
+        events = events_result.get('items', [])
+        upcoming_events = ""
+        if not events:
+            print('No upcoming events found.')
+        for event in events:
+            start = event['start'].get('dateTime', event['start'].get('date'))
+            print(start, event['summary'])
+            upcoming_events += f"{start} {event['summary']}\n"
+        return upcoming_events
+
+    def publish_event(self, summary, start_datetime, end_datetime, timezone):
+        event_data = {
+            'summary': summary,
+            'start': {
+                'dateTime': start_datetime,
+                'timeZone': timezone,
+            },
+            'end': {
+                'dateTime': end_datetime,
+                'timeZone': timezone,
+            },
+        }
+
+        # Load the credentials from the service account key file
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+        # Build the Google Calendar API client
+        service = build('calendar', 'v3', credentials=creds)
+
+        # Create the event
+        event = service.events().insert(calendarId=self.calendar_id, body=event_data).execute()
+        # Print the event ID
+        print(f"Event created: {event.get('id')}")
         
-
-       
-
-
-
-
+        
 
 # EventHandler class to define
 # how we want to handle the events in the response stream.
@@ -187,9 +261,20 @@ class EventHandler(AssistantEventHandler):
         print("Handling required action")
         tool_outputs = []
         for tool in data.required_action.submit_tool_outputs.tool_calls:
+            # Get time and date
             if tool.function.name == "get_time_date":
                 current_time = self.asst.get_time_date()
                 tool_outputs.append({"tool_call_id": tool.id, "output": current_time})
+            # Get upcoming events
+            elif tool.function.name == "get_upcoming_events":
+                upcoming = self.asst.get_upcoming_events()
+                tool_outputs.append({"tool_call_id": tool.id, "output": upcoming})
+            # Publish event
+            elif tool.function.name == "publish_event":
+                print(tool.function)
+                # self.asst.publish_event(summary, start_datetime, end_datetime, timezone)
+                tool_outputs.append({"tool_call_id": tool.id, "output": "Event published"})
+
         self.submit_tool_outputs(tool_outputs, run_id)
 
     def submit_tool_outputs(self, tool_outputs, run_id):

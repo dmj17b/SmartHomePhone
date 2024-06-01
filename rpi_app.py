@@ -20,19 +20,29 @@ def main(argv=None):
     # Function to switch to the home screen
     def homeScreen(event):
         paint.frame.grid_forget()
-        scarlett.frame.grid_forget()
+        donna.frame.grid_forget()
+        sett.frame.grid_forget()
         homescreen.grid(row=1, column=0)
 
     # Function to switch to the paint screen
     def paintScreen(event):
         homescreen.grid_forget()
-        scarlett.frame.grid_forget()
+        donna.frame.grid_forget()
+        sett.frame.grid_forget()
         paint.frame.grid(row=1, column=0)
 
     def assistant(event):
         homescreen.grid_forget()
         paint.frame.grid_forget()
-        scarlett.frame.grid(row=1,column=0)
+        sett.frame.grid_forget()
+        donna.frame.grid(row=1,column=0)
+
+    def settings_screen(event):
+        homescreen.grid_forget()
+        paint.frame.grid_forget()
+        donna.frame.grid_forget()
+        sett.frame.grid(row=1,column=0,sticky='w')
+
 
     def checkIfRecording():
         if(stt.rec_on):
@@ -51,6 +61,7 @@ def main(argv=None):
     window.attributes('-fullscreen',True)
     window.resizable(False, False)
 
+    # Create stt helper:
     stt = s2t.STT(master=window,mic_index=3)    
 
 

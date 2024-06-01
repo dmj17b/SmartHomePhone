@@ -17,4 +17,5 @@
 !applib/assistants.py
 !rpi_app.py
 !applib/stt.py
+!applib/settings.py
 !requirements.txt
