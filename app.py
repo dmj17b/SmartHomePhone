@@ -33,8 +33,8 @@ def main(argv=None):
     window.bind('<Escape>', lambda e: window.destroy())
     window.title('HomePhone')
     window.geometry('800x480')
-    window.attributes('-fullscreen',True)
-    window.resizable(False, False)
+    # window.attributes('-fullscreen',True)
+    # window.resizable(False, False)
     
     # Create stt object:
     stt = asst.STT(master=window)

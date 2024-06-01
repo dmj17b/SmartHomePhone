@@ -8,12 +8,10 @@ Main file to run is app.py. Everything else is development or packaging code for
 
 # Python packages to install:
 
-tkinter
-ttkbootstrap
-openai
-google-api-python-client
-google-auth-httplib2
-google-auth-oauthlib
-pyaudio
-setuptools
-SpeechRecognition
+pip install tkinter ttkbootstrap
+pip install openai
+pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
+pip install pyaudio setuptools SpeechRecognition
+
+# OpenAI stuff:
+Need to put in your own key. Include nothing but the key in a file named "openaikey.txt"
