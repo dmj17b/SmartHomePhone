@@ -7,6 +7,7 @@ from applib import paint as pt
 import os
 from applib import assistants as asst
 from applib import stt as s2t
+from applib import settings as stg
 import RPi.GPIO as GPIO
 
 LED_PIN=21
@@ -69,12 +70,15 @@ def main(argv=None):
     global paint
     paint = pt.PaintCanvas(master=window)
     global homescreen
-    #Initialize scheduling assistant (scarlett)
-    global scarlett
-    scarlett = asst.ScheduleAssistant(master=window,stt=stt)
+    #Initialize scheduling assistant (donna)
+    global donna
+    donna = asst.ScheduleAssistant(master=window,stt=stt)
     homescreen = ttk.Canvas(master=window, width=600, height=390, bg='white')
     homescreen.grid(row=1, column=0)
 
+    # Create the settings widget:
+    global sett
+    sett = stg.Settings(master=window)
 
 
     # Call the clock widget:

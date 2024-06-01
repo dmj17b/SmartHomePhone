@@ -14,11 +14,8 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-<<<<<<< HEAD
-=======
 # If modifying these SCOPES, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
->>>>>>> aacea38c3f231deac1056fddd5236c6f4651473f
 
 
 # Specifically calls an assistant designed to help with scheduling
@@ -132,11 +129,7 @@ class ScheduleAssistant(AssistantEventHandler):
     # Function to call the assistant
     def call_assistant(self, query):
         print("Calling assistant!")
-<<<<<<< HEAD
-        # self.stt.stop_listening_thread()
-=======
         self.stop_button_func()
->>>>>>> aacea38c3f231deac1056fddd5236c6f4651473f
 
         # Sending message to assistant
         message = self.client.beta.threads.messages.create(

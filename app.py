@@ -53,14 +53,13 @@ def main(argv=None):
     window = ttk.Window(themename='cyborg')
     window.bind('<Escape>', lambda e: window.destroy())
     window.title('HomePhone')
-    window.geometry('1900x1200')
-    window.geometry('1900x1200')
+    window.geometry('800x480')
     # window.attributes('-fullscreen',True)
     window.resizable(False, False)
-    window.resizable(False, False)
+
     
     # Create stt object:
-    stt = s2t.STT(master=window,mic_index=0,mic_index=1)
+    stt = s2t.STT(master=window,mic_index=0)
 
     # Create each of the main widgets
     global paint
@@ -77,9 +76,6 @@ def main(argv=None):
     homescreen = ttk.Canvas(master=window, width=600, height=390, bg='white')
     homescreen.grid(row=1, column=0)
 
-    # Create the settings widget:
-    global sett
-    sett = stg.Settings(master=window)
     # Create the settings widget:
     global sett
     sett = stg.Settings(master=window)
