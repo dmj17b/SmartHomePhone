@@ -48,7 +48,7 @@ def main(argv=None):
     window.resizable(False, False)
     
     # Create stt object:
-    stt = s2t.STT(master=window,mic_index=1)
+    stt = s2t.STT(master=window,mic_index=0)
     stt.calibrateMic()
 
     # Create each of the main widgets

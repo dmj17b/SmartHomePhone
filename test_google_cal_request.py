@@ -1,7 +1,5 @@
-from __future__ import print_function
 import datetime
 import os.path
-import pickle
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -11,7 +9,7 @@ from googleapiclient.discovery import build
 # If modifying these SCOPES, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
-def main():
+def get_upcoming_events():
     """Shows basic usage of the Google Calendar API.
     Prints the start and name of the next 10 events on the user's calendar.
     """
@@ -42,12 +40,14 @@ def main():
                                           maxResults=10, singleEvents=True,
                                           orderBy='startTime').execute()
     events = events_result.get('items', [])
-
+    upcoming_events = ""
     if not events:
         print('No upcoming events found.')
     for event in events:
         start = event['start'].get('dateTime', event['start'].get('date'))
         print(start, event['summary'])
+        upcoming_events += f"{start} {event['summary']}\n"
+    return upcoming_events
 
 if __name__ == '__main__':
-    main()
+    get_upcoming_events()

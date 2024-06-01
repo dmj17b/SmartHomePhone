@@ -28,6 +28,7 @@ class STT:
 
 
     def stop_listening_thread(self):
+        print("Stopping listening thread")  
         self.stop_listening = True
         self.rec_on = False
 
@@ -39,9 +40,13 @@ class STT:
             print("Listening... Press the stop button to stop.")
             while not self.stop_listening:
                 try:
-                    audio = recognizer.listen(source, timeout=1.5)
-                    self.transcription.set(value = recognizer.recognize_google(audio))
+                    audio = recognizer.listen(source, timeout=1.5, phrase_time_limit=10.0)
+                    print("Transcribing...")
+                    transcript = recognizer.recognize_google(audio)
+                    self.transcription.set(value=transcript)
+                    print()
                 except sr.WaitTimeoutError:
+                    print("Timeout error")
                     continue
                 except sr.UnknownValueError:
                     print("Google Web Speech API could not understand audio")
