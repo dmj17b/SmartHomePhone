@@ -82,11 +82,11 @@ class Menu:
                         style='primary')
         self.destroybutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
 
-        self.paintbutton = ttk.Button(master=self.button_frame,
+        self.settings_button = ttk.Button(master=self.button_frame,
                         text='Settings',
                         width=self.buttonWidth,
                         style='primary')
-        self.paintbutton.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
+        self.settings_button.pack(pady=self.pady, side='left', padx=self.padx, ipadx=self.ipadx, ipady=self.ipady)
         return
 
     

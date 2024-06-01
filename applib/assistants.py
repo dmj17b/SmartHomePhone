@@ -8,74 +8,6 @@ from openai import AssistantEventHandler
 from typing_extensions import override
 import threading
 
-class STT:
-    def __init__(self,master,mic_index):
-        # Setting up recognizer and mic:
-        self.recognizer = sr.Recognizer()
-        self.mic_index = mic_index
-        self.source = sr.Microphone(device_index=self.mic_index, sample_rate=44100, chunk_size=1024)
-        self.rec_on = False
-        # Tkinter string variable to hold the transcription:
-        self.transcription = tk.StringVar(master=master)
-
-    # Wrapper function to calibrate the mic
-    def calibrateMic(self):
-        with self.source:
-            self.recognizer.adjust_for_ambient_noise(self.source)
-
-        
-    # Listening with threading:
-    def start_listening_thread(self):
-        print("Starting listening thread")
-        self.stop_listening = False
-        self.thread = threading.Thread(target=self.listen)
-        self.thread.start()
-
-    def stop_listening_thread(self):
-        self.stop_listening = True
-        self.rec_on = False
-
-    def listen(self):
-        recognizer = self.recognizer
-        recognizer.pause_threshold = 1.0  # Adjust as needed
-        self.rec_on = True
-        with sr.Microphone() as source:
-            print("Listening... Press the stop button to stop.")
-
-            while not self.stop_listening:
-                try:
-                    audio = recognizer.listen(source, timeout=1.5)
-                    self.transcription.set(value = recognizer.recognize_google(audio))
-                except sr.WaitTimeoutError:
-                    continue
-                except sr.UnknownValueError:
-                    print("Google Web Speech API could not understand audio")
-                except sr.RequestError as e:
-                    print(f"Could not request results from Google Web Speech API; {e}")
-
-# Helper class to create a touch scrollable text field
-class TouchScrollableText(tk.Text):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.bind('<Button-1>', self.on_touch_start)
-        self.bind('<B1-Motion>', self.on_touch_move)
-        self.bind('<ButtonRelease-1>', self.on_touch_end)
-        self._start_y = None
-        self._scroll_start_y = None
-
-    def on_touch_start(self, event):
-        self._start_y = event.y
-        self._scroll_start_y = self.yview()[0]
-
-    def on_touch_move(self, event):
-        if self._start_y is not None:
-            delta_y = event.y - self._start_y
-            new_y = self._scroll_start_y - delta_y / self.winfo_height()
-            self.yview_moveto(new_y)
-
-    def on_touch_end(self, event):
-        self._start_y = None
-        self._scroll_start_y = None
 
 
 # Specifically calls an assistant designed to help with scheduling
@@ -172,7 +104,8 @@ class ScheduleAssistant(AssistantEventHandler):
         self.transcription_text.insert(tk.END,"\n\n"+self.user_name+"> ","user_tag")
         self.transcription_text.insert(tk.END,query + "\n","msg_tag")
         self.transcription_text.see(tk.END)
-        threading.Thread(target=self.call_assistant, args=(query,)).start()
+        self.call_assistant(query)
+        # threading.Thread(target=self.call_assistant, args=(query,)).start()
 
 # Function to start the listening thread
     def start_button_func(self):
@@ -193,6 +126,8 @@ class ScheduleAssistant(AssistantEventHandler):
     # Function to call the assistant
     def call_assistant(self, query):
         print("Calling assistant!")
+        # self.stt.stop_listening_thread()
+
         # Sending message to assistant
         message = self.client.beta.threads.messages.create(
             thread_id=self.openai_thread.id,
@@ -267,3 +202,29 @@ class EventHandler(AssistantEventHandler):
             for text in stream.text_deltas:
                 print(text, end="", flush=True)
             print()
+
+
+# TouchScrollableText class to create a text widget that can be scrolled
+# Helper class to create a touch scrollable text field
+class TouchScrollableText(tk.Text):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.bind('<Button-1>', self.on_touch_start)
+        self.bind('<B1-Motion>', self.on_touch_move)
+        self.bind('<ButtonRelease-1>', self.on_touch_end)
+        self._start_y = None
+        self._scroll_start_y = None
+
+    def on_touch_start(self, event):
+        self._start_y = event.y
+        self._scroll_start_y = self.yview()[0]
+
+    def on_touch_move(self, event):
+        if self._start_y is not None:
+            delta_y = event.y - self._start_y
+            new_y = self._scroll_start_y - delta_y / self.winfo_height()
+            self.yview_moveto(new_y)
+
+    def on_touch_end(self, event):
+        self._start_y = None
+        self._scroll_start_y = None

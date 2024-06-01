@@ -1,4 +1,3 @@
-import numpy as np
 import time
 import tkinter as tk
 import ttkbootstrap as ttk
