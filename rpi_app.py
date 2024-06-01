@@ -6,6 +6,7 @@ from applib import homescreen as hs
 from applib import paint as pt
 import os
 from applib import assistants as asst
+from applib import stt as s2t
 import RPi.GPIO as GPIO
 
 LED_PIN=21
@@ -50,7 +51,7 @@ def main(argv=None):
     window.attributes('-fullscreen',True)
     window.resizable(False, False)
 
-    stt = asst.STT(master=window,mic_index=3)    
+    stt = s2t.STT(master=window,mic_index=3)    
 
 
     # Create each of the main widgets

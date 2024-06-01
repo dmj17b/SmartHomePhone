@@ -79,7 +79,7 @@ class TouchScrollableText(tk.Text):
 
 
 # Specifically calls an assistant designed to help with scheduling
-# (Her name is Scarlett)
+# (Her name is Donna)
 class ScheduleAssistant(AssistantEventHandler):
     def __init__(self,master,stt):
         self.asst_name = "Donna"

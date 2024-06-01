@@ -6,6 +6,7 @@ from applib import homescreen as hs
 from applib import paint as pt
 import os
 from applib import assistants as asst
+from applib import stt as s2t
 
 
 def main(argv=None):
@@ -37,7 +38,7 @@ def main(argv=None):
     # window.resizable(False, False)
     
     # Create stt object:
-    stt = asst.STT(master=window)
+    stt = s2t.STT(master=window)
     stt.calibrateMic()
 
     # Create each of the main widgets
