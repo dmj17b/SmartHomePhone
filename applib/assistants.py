@@ -264,11 +264,8 @@ class EventHandler(AssistantEventHandler):
                 tool_outputs.append({"tool_call_id": tool.id, "output": upcoming})
             # Publish event
             elif tool.function.name == "publish_event":
-                summary = tool.arguments["summary"]
-                start_datetime = tool.arguments["start_datetime"]
-                end_datetime = tool.arguments.get("end_datetime")
-                timezone = tool.arguments.get("timezone")
-                self.asst.publish_event(summary, start_datetime, end_datetime, timezone)
+                print(tool.function)
+                # self.asst.publish_event(summary, start_datetime, end_datetime, timezone)
                 tool_outputs.append({"tool_call_id": tool.id, "output": "Event published"})
 
         self.submit_tool_outputs(tool_outputs, run_id)

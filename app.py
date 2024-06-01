@@ -48,8 +48,7 @@ def main(argv=None):
     window.resizable(False, False)
     
     # Create stt object:
-    stt = s2t.STT(master=window,mic_index=0)
-    stt.calibrateMic()
+    stt = s2t.STT(master=window,mic_index=1)
 
     # Create each of the main widgets
     global paint
@@ -83,7 +82,9 @@ def main(argv=None):
     menu.asstbutton.bind('<Button-1>', func=assistant)
 
     # run
+    window.after(100, stt.calibrateMic())
     window.mainloop()
+
 
 
 if __name__ == "__main__":
