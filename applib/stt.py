@@ -26,6 +26,7 @@ class STT:
         self.thread = threading.Thread(target=self.listen)
         self.thread.start()
 
+
     def stop_listening_thread(self):
         self.stop_listening = True
         self.rec_on = False
