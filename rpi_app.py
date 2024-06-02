@@ -94,7 +94,7 @@ def main(argv=None):
     menu.settings_button.bind('<Button-1>', func=paintScreen)
     menu.homebutton.bind('<Button-1>', func=homeScreen)
     menu.asstbutton.bind('<Button-1>', func=assistant)
-
+ 
     # run
     window.after(500,checkIfRecording)
     window.after(1000,stt.calibrateMic)

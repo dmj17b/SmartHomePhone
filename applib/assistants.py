@@ -357,13 +357,16 @@ class TouchScrollableText(tk.Text):
     def on_touch_start(self, event):
         self._start_y = event.y
         self._scroll_start_y = self.yview()[0]
+        return 'break'
 
     def on_touch_move(self, event):
         if self._start_y is not None:
             delta_y = event.y - self._start_y
             new_y = self._scroll_start_y - delta_y / self.winfo_height()
             self.yview_moveto(new_y)
+        return 'break'
 
     def on_touch_end(self, event):
         self._start_y = None
         self._scroll_start_y = None
+        return 'break'
