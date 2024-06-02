@@ -9,6 +9,7 @@ from typing_extensions import override
 import threading
 import datetime
 import os.path
+import json
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -39,6 +40,7 @@ class ScheduleAssistant(AssistantEventHandler):
         # Initialize the calendar id
         self.calendar_id = 'd235ade838a883c134c4780cb0cb45c64c8ad09add4bd6607f5680df32b7593a@group.calendar.google.com'
         self.stt = stt
+        self.stt_on = True
         self.master = master
         self.frame = ttk.Frame(master=self.master,width=800,height=390)
         self.frame.configure(width=800,height=390)
@@ -101,6 +103,10 @@ class ScheduleAssistant(AssistantEventHandler):
     def clear_text(self):
        self.transcription_text.delete(1.0,tk.END)
 
+# Function to turn stt on or off
+    def toggle_stt(self):
+        self.stt_on = not self.stt_on
+
 # Adds user transcription to the text field
     def update_text(self,*args):
         query = self.stt.transcription.get()
@@ -129,7 +135,8 @@ class ScheduleAssistant(AssistantEventHandler):
     # Function to call the assistant
     def call_assistant(self, query):
         print("Calling assistant!")
-        self.stop_button_func()
+        if self.stt_on:
+            self.stop_button_func()
 
         # Sending message to assistant
         message = self.client.beta.threads.messages.create(
@@ -153,7 +160,8 @@ class ScheduleAssistant(AssistantEventHandler):
             event_handler=EventHandler(self),
             ) as stream:
             stream.until_done()
-            self.start_button_func()
+            if self.stt_on:
+                self.start_button_func()
 
 ############################# OPENAI TOOLS #####################################
 # Get time in am/pm
@@ -238,11 +246,13 @@ class EventHandler(AssistantEventHandler):
     @override
     def on_text_created(self, text) -> None:
         self.asst.transcription_text.insert(tk.END, "\n" + self.asst.asst_name + "> ", "asst_tag")
+        print("\n" + self.asst.asst_name + "> ", end="", flush=True)
 
     @override
     def on_text_delta(self, delta, snapshot):
         self.asst.transcription_text.insert(tk.END, delta.value, "msg_tag")
         self.asst.transcription_text.see(tk.END)
+        print(delta.value, end="", flush=True)
 
     @override
     def on_event(self, event):
@@ -263,13 +273,14 @@ class EventHandler(AssistantEventHandler):
                 upcoming = self.asst.get_upcoming_events()
                 tool_outputs.append({"tool_call_id": tool.id, "output": upcoming})
             # Publish event
-            elif tool.function.name == "publish_event":
-                print(tool.function)
-                summary = tool["arguments"].get("summary")
-                start_datetime = tool["arguments"].get("start_datetime")
-                end_datetime = tool["arguments"].get("end_datetime")
-                timezone = tool["arguments"].get("timezone")
-                # self.asst.publish_event(summary, start_datetime, end_datetime, timezone)
+            elif tool.function.name == "publish_event":                
+                json_args = tool.function.arguments
+                args = json.loads(json_args)
+                summary = args.get("summary")
+                start_datetime = args.get("start_datetime")
+                end_datetime = args.get("end_datetime")
+                timezone = args.get("timezone")
+                self.asst.publish_event(summary, start_datetime, end_datetime, timezone)
                 tool_outputs.append({"tool_call_id": tool.id, "output": "Event published"})
 
         self.submit_tool_outputs(tool_outputs, run_id)
@@ -282,8 +293,7 @@ class EventHandler(AssistantEventHandler):
             event_handler=EventHandler(self.asst),
         ) as stream:
             for text in stream.text_deltas:
-                print(text, end="", flush=True)
-            print()
+                print()
 
 
 # TouchScrollableText class to create a text widget that can be scrolled
