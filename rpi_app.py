@@ -12,11 +12,15 @@ import RPi.GPIO as GPIO
 
 LED_PIN=21
 PHONE_SWITCH_PIN=16
+# Set up GPIO
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(LED_PIN,GPIO.OUT)
+# GPIO.setup(PHONE_SWITCH_PIN,GPIO.IN,pull_up_down=GPIO.PUD_UP)
+# GPIO.add_event_detect(PHONE_SWITCH_PIN,edge=GPIO.FALLING,callback=lambda:print("Falling"))
+
+
 
 def main(argv=None):
-    # Set up GPIO
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(LED_PIN,GPIO.OUT)
 
     # Function to switch to the home screen
     def homeScreen(event):
@@ -43,7 +47,11 @@ def main(argv=None):
         paint.frame.grid_forget()
         donna.frame.grid_forget()
         sett.frame.grid(row=1,column=0,sticky='w')
-
+    
+    def phone_switch_func():
+        print("Phone placed on hook")
+        donna.stop_button_func()
+  
 
     def checkIfRecording():
         if(stt.rec_on):
@@ -51,6 +59,7 @@ def main(argv=None):
         if(not stt.rec_on):
             GPIO.output(LED_PIN,GPIO.LOW)
         window.after(100,checkIfRecording)
+    
     # Create stt object:
     
     # Create the root window

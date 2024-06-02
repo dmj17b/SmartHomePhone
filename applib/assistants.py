@@ -43,6 +43,7 @@ class ScheduleAssistant(AssistantEventHandler):
 
         self.stt = stt
         self.stt_on = True
+        self.stt_stopped = False
         self.master = master
         self.frame = ttk.Frame(master=self.master,width=800,height=390)
         self.frame.configure(width=800,height=390)
@@ -120,6 +121,7 @@ class ScheduleAssistant(AssistantEventHandler):
 
 # Function to start the listening thread
     def start_button_func(self):
+        self.stt_stopped = False
         self.stt.start_listening_thread()
         self.listen_button.config(state=tk.DISABLED)
         self.stop_button.config(state=tk.NORMAL)
@@ -129,16 +131,18 @@ class ScheduleAssistant(AssistantEventHandler):
         self.stt.stop_listening_thread()
         self.listen_button.config(state=tk.NORMAL)
         self.stop_button.config(state=tk.DISABLED)
+        self.stt_stopped = True
 
-
+    def pause_stt_stream(self):
+        self.stt.stop_listening_thread()
+        self.listen_button.config(state=tk.NORMAL)
+        self.stop_button.config(state=tk.DISABLED)
 
 # Function to call the assistant
-
-    # Function to call the assistant
     def call_assistant(self, query):
         print("Calling assistant!")
         if self.stt_on:
-            self.stop_button_func()
+            self.pause_stt_stream()
 
         # Sending message to assistant
         message = self.client.beta.threads.messages.create(
@@ -146,27 +150,25 @@ class ScheduleAssistant(AssistantEventHandler):
             content=query,
             role="user",
         )
-
-
-
         # Retrieving response from assistant:
         self.response_thread = threading.Thread(target=self.stream_response)
         self.response_thread.start()
     
-
 # Function to call event handler and stream GPT response
     def stream_response(self):
+       print(self.stt_stopped)
        with self.client.beta.threads.runs.stream(
             thread_id=self.openai_thread.id,
             assistant_id=self.assistant_id,
             event_handler=EventHandler(self),
             ) as stream:
             stream.until_done()
-            if self.stt_on:
+            if (self.stt_on and not self.stt_stopped):
                 self.start_button_func()
 
+
 ############################# OPENAI TOOLS #####################################
-# Get time in am/pm
+# Initializes google calendar service
     def init_google_calendar(self):
         # Load the credentials from the service account key file
         if os.path.exists('token.json'):
@@ -185,13 +187,15 @@ class ScheduleAssistant(AssistantEventHandler):
                 token.write(creds.to_json())
         self.service = build('calendar', 'v3', credentials=creds)
 
+# Get time in am/pm
     def get_time_date(self):
         # Get the time and date
         current_time = time.strftime("%I:%M %p")
         current_date = time.strftime("%B %d, %Y")
         time_date_string = f"{current_time} on {current_date}"
         return time_date_string
-    
+
+# Fetches upcomign events from user calendar and assistant calendar
     def get_upcoming_events(self):
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is
@@ -199,7 +203,6 @@ class ScheduleAssistant(AssistantEventHandler):
         # time.
         upcoming_events = ""
 
-        
         # Call the Calendar API
         now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
         print('Getting the upcoming 10 events')
@@ -232,6 +235,7 @@ class ScheduleAssistant(AssistantEventHandler):
             upcoming_events += f"{start} {event['summary']}\n"
         return upcoming_events
 
+# Function to publish a calendar event
     def publish_calendar_event(self, summary, start_datetime, end_datetime, timezone):
         event_data = {
             'summary': summary,
@@ -272,10 +276,7 @@ class ScheduleAssistant(AssistantEventHandler):
 
         
 
-# EventHandler class to define
-# how we want to handle the events in the response stream.
-
- 
+# EventHandler class to define how we want to handle the events in the response stream. 
 class EventHandler(AssistantEventHandler):
     def __init__(self, asst):
         super().__init__()
@@ -298,6 +299,7 @@ class EventHandler(AssistantEventHandler):
             run_id = event.data.id
             self.handle_requires_action(event.data, run_id)
 
+    # Handles all of the inputs/outputs tool calls the GPT will make
     def handle_requires_action(self, data, run_id):
         print("Handling required action")
         tool_outputs = []
@@ -310,7 +312,7 @@ class EventHandler(AssistantEventHandler):
             elif tool.function.name == "get_upcoming_events":
                 upcoming = self.asst.get_upcoming_events()
                 tool_outputs.append({"tool_call_id": tool.id, "output": upcoming})
-            # Publish event
+            # Publish google calendar event
             elif tool.function.name == "publish_calendar_event":                
                 json_args = tool.function.arguments
                 args = json.loads(json_args)
@@ -320,15 +322,17 @@ class EventHandler(AssistantEventHandler):
                 timezone = args.get("timezone")
                 self.asst.publish_calendar_event(summary, start_datetime, end_datetime, timezone)
                 tool_outputs.append({"tool_call_id": tool.id, "output": "Event published"})
+            # Delete google calendar event
             elif tool.function.name == "delete_calendar_event":
                 json_args = tool.function.arguments
                 args = json.loads(json_args)
                 event_start_time = args.get("event_start_time")
                 response = self.asst.delete_calendar_event(event_start_time)
                 tool_outputs.append({"tool_call_id": tool.id, "output": response})
-
+        # Submit the tool outputs
         self.submit_tool_outputs(tool_outputs, run_id)
 
+    # Function to submit tool outputs
     def submit_tool_outputs(self, tool_outputs, run_id):
         with self.asst.client.beta.threads.runs.submit_tool_outputs_stream(
             thread_id=self.current_run.thread_id,
