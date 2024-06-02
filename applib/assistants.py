@@ -37,8 +37,10 @@ class ScheduleAssistant(AssistantEventHandler):
         self.openai_thread = self.client.beta.threads.create()
         self.assistant_id = "asst_y2dZ6Vx8klSm0BSMZU9GeTLA"
         self.asst_response = ""
-        # Initialize the calendar id
+        # Initialize the calendar stuff
         self.calendar_id = 'd235ade838a883c134c4780cb0cb45c64c8ad09add4bd6607f5680df32b7593a@group.calendar.google.com'
+        self.init_google_calendar()
+
         self.stt = stt
         self.stt_on = True
         self.master = master
@@ -165,6 +167,24 @@ class ScheduleAssistant(AssistantEventHandler):
 
 ############################# OPENAI TOOLS #####################################
 # Get time in am/pm
+    def init_google_calendar(self):
+        # Load the credentials from the service account key file
+        if os.path.exists('token.json'):
+            creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+            self.cred=creds
+        # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    'credentials.json', SCOPES)
+                creds = flow.run_local_server(port=0)
+            # Save the credentials for the next run
+            with open('token.json', 'w') as token:
+                token.write(creds.to_json())
+        self.service = build('calendar', 'v3', credentials=creds)
+
     def get_time_date(self):
         # Get the time and date
         current_time = time.strftime("%I:%M %p")
@@ -177,39 +197,42 @@ class ScheduleAssistant(AssistantEventHandler):
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists('token.json'):
-            creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-        # If there are no (valid) credentials available, let the user log in.
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', SCOPES)
-                creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run
-            with open('token.json', 'w') as token:
-                token.write(creds.to_json())
+        upcoming_events = ""
 
-        service = build('calendar', 'v3', credentials=creds)
-
+        
         # Call the Calendar API
         now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
         print('Getting the upcoming 10 events')
-        events_result = service.events().list(calendarId='primary', timeMin=now,
+        # Gets MY upcoming events (more important)
+        user_events_result = self.service.events().list(calendarId='primary', timeMin=now,
                                             maxResults=10, singleEvents=True,
                                             orderBy='startTime').execute()
-        events = events_result.get('items', [])
-        upcoming_events = ""
+        events = user_events_result.get('items', [])
+        upcoming_events += "User scheduled events:\n"
         if not events:
-            print('No upcoming events found.')
+            print('No upcoming events found for user calendar.')
+            upcoming_events += "No upcoming events found for user calendar.\n"
+        for event in events:
+            start = event['start'].get('dateTime', event['start'].get('date'))
+            print(start, event['summary'])
+            upcoming_events += f"{start} {event['summary']}\n"
+
+        # Gets Donna's scheduled events (sometimes wrong, dont need to follow)
+        asst_events_result = self.service.events().list(calendarId=self.calendar_id, timeMin=now,
+                                            maxResults=10, singleEvents=True,
+                                            orderBy='startTime').execute()
+        events = asst_events_result.get('items', [])
+        upcoming_events += "Assistant scheduled events:\n"
+        if not events:
+            print('No upcoming events found on assistant created schedule for user.')
+            upcoming_events += "No upcoming events found on assistant created schedule for user.\n"
         for event in events:
             start = event['start'].get('dateTime', event['start'].get('date'))
             print(start, event['summary'])
             upcoming_events += f"{start} {event['summary']}\n"
         return upcoming_events
 
-    def publish_event(self, summary, start_datetime, end_datetime, timezone):
+    def publish_calendar_event(self, summary, start_datetime, end_datetime, timezone):
         event_data = {
             'summary': summary,
             'start': {
@@ -221,17 +244,32 @@ class ScheduleAssistant(AssistantEventHandler):
                 'timeZone': timezone,
             },
         }
-
-        # Load the credentials from the service account key file
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-        # Build the Google Calendar API client
-        service = build('calendar', 'v3', credentials=creds)
-
         # Create the event
-        event = service.events().insert(calendarId=self.calendar_id, body=event_data).execute()
+        event = self.service.events().insert(calendarId=self.calendar_id, body=event_data).execute()
         # Print the event ID
         print(f"Event created: {event.get('id')}")
-        
+    
+# Function to delete a calendar event
+    def delete_calendar_event(self, event_start_time):
+        # Get the event ID by searching for the event with the start time
+        page_token = None
+        while True:
+            events_result = self.service.events().list(calendarId=self.calendar_id, pageToken=page_token).execute()
+            events = events_result.get('items', [])
+            for event in events:
+                if 'start' in event and event['start'].get('dateTime', '') == event_start_time:
+                    self.service.events().delete(calendarId=self.calendar_id, eventId=event['id']).execute()
+                    print(f"Event deleted: {event['summary']} at {event['start']['dateTime']}")
+                    response = "Event deleted"
+                    return response
+
+            page_token = events_result.get('nextPageToken')
+            if not page_token:
+                break
+        print("No matching events found to delete.")
+        response = "No matching events found to delete."
+        return response
+
         
 
 # EventHandler class to define
@@ -273,15 +311,21 @@ class EventHandler(AssistantEventHandler):
                 upcoming = self.asst.get_upcoming_events()
                 tool_outputs.append({"tool_call_id": tool.id, "output": upcoming})
             # Publish event
-            elif tool.function.name == "publish_event":                
+            elif tool.function.name == "publish_calendar_event":                
                 json_args = tool.function.arguments
                 args = json.loads(json_args)
                 summary = args.get("summary")
                 start_datetime = args.get("start_datetime")
                 end_datetime = args.get("end_datetime")
                 timezone = args.get("timezone")
-                self.asst.publish_event(summary, start_datetime, end_datetime, timezone)
+                self.asst.publish_calendar_event(summary, start_datetime, end_datetime, timezone)
                 tool_outputs.append({"tool_call_id": tool.id, "output": "Event published"})
+            elif tool.function.name == "delete_calendar_event":
+                json_args = tool.function.arguments
+                args = json.loads(json_args)
+                event_start_time = args.get("event_start_time")
+                response = self.asst.delete_calendar_event(event_start_time)
+                tool_outputs.append({"tool_call_id": tool.id, "output": response})
 
         self.submit_tool_outputs(tool_outputs, run_id)
 
@@ -292,8 +336,8 @@ class EventHandler(AssistantEventHandler):
             tool_outputs=tool_outputs,
             event_handler=EventHandler(self.asst),
         ) as stream:
-            for text in stream.text_deltas:
-                print()
+            stream.until_done()
+        
 
 
 # TouchScrollableText class to create a text widget that can be scrolled
@@ -302,6 +346,8 @@ class TouchScrollableText(tk.Text):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.unbind('<Button-1>')
+        self.unbind('<B1-Motion>')
+        self.unbind('<ButtonRelease-1>')
         self.bind('<Button-1>', self.on_touch_start)
         self.bind('<B1-Motion>', self.on_touch_move)
         self.bind('<ButtonRelease-1>', self.on_touch_end)
