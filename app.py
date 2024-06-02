@@ -55,11 +55,12 @@ def main(argv=None):
     window.title('HomePhone')
     window.geometry('800x480')
     # window.attributes('-fullscreen',True)
-    window.resizable(False, False)
+    # window.resizable(False, False)
 
     
     # Create stt object:
-    stt = s2t.STT(master=window,mic_index=0)
+    stt = s2t.STT(master=window,mic_index=1)
+    stt.calibrateMic()
 
     # Create each of the main widgets
     global paint

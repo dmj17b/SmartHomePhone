@@ -265,6 +265,10 @@ class EventHandler(AssistantEventHandler):
             # Publish event
             elif tool.function.name == "publish_event":
                 print(tool.function)
+                summary = tool["arguments"].get("summary")
+                start_datetime = tool["arguments"].get("start_datetime")
+                end_datetime = tool["arguments"].get("end_datetime")
+                timezone = tool["arguments"].get("timezone")
                 # self.asst.publish_event(summary, start_datetime, end_datetime, timezone)
                 tool_outputs.append({"tool_call_id": tool.id, "output": "Event published"})
 
@@ -287,6 +291,7 @@ class EventHandler(AssistantEventHandler):
 class TouchScrollableText(tk.Text):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.unbind('<Button-1>')
         self.bind('<Button-1>', self.on_touch_start)
         self.bind('<B1-Motion>', self.on_touch_move)
         self.bind('<ButtonRelease-1>', self.on_touch_end)
